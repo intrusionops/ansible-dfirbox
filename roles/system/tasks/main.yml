@@ -1,0 +1,248 @@
+- name: Make sure debian's main repo exists
+  ansible.builtin.apt_repository:
+    repo: deb http://deb.debian.org/debian "{{ debian_release }}" main non-free-firmware
+    state: present
+
+- name: Make sure debian's security repo exists
+  ansible.builtin.apt_repository:
+    repo: deb http://deb.debian.org/debian-security/ "{{ debian_release }}"-security main non-free-firmware
+    state: present
+
+- name: Make sure debian's update repo exists
+  ansible.builtin.apt_repository:
+    repo: deb http://deb.debian.org/debian "{{ debian_release }}"-updates main non-free-firmware
+    state: present
+
+- name: Update and upgrade apt packages
+  become: true
+  apt:
+    upgrade: 'yes'
+    update_cache: yes
+    cache_valid_time: 86400 # one day
+
+- name: Install base packages
+  apt:
+    pkg:
+     - locales
+     - build-essential
+     - acl
+     - ntp
+     - git
+     - python3
+     - python3-pip
+     - python3-venv
+     - python3-full
+     - python3-docker
+     - supervisor
+     - cifs-utils
+     - libnotify-bin
+     - screen
+     - tcpdump
+     - htop
+     - rsync
+     - net-tools
+     - binutils
+     - gcc
+     - make
+     - dkms
+     - fakeroot
+     - build-essential
+     - strace
+     - ncal
+     - borgbackup
+     - pwgen
+     - virt-manager
+     - flameshot
+     - qdirstat
+     - jq 
+     - mtr
+     - iperf3
+     - zip
+     - socat
+     - mutt
+     - p7zip
+     - thunderbird
+     - unzip
+     - apt-transport-https
+     - ca-certificates
+     - curl
+     - gnupg-agent
+     - software-properties-common 
+     - geoip-bin
+     - firejail
+     - cryptsetup
+     - dnsutils
+     - whois
+     - nmap
+     - keepassxc
+     - remmina
+     - libreoffice
+     - lxc
+     - info
+  become: yes
+  tags:
+    - packages
+
+- name: Set default umask to 006 (owner and group rw)
+  replace:
+    path: "/etc/login.defs"
+    regexp: "UMASK           022"
+    replace: "UMASK           006"
+
+- name: Allow passwordless sudo for sudo group
+  lineinfile:
+    path: /etc/sudoers
+    state: present
+    regexp: '^%sudo\s'
+    line: '%sudo ALL=(ALL) NOPASSWD: ALL'
+
+- name: Running commands to prevent sleep
+  shell: "systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target"
+
+- name: disable some services
+  systemd:
+    service: "{{ item }}"
+    enabled: no
+    state: stopped
+  with_items:
+      "{{ stop_services }}"
+  ignore_errors: true
+
+# osquery
+- name: Install osquery
+  ansible.builtin.apt:
+     deb: "{{ osquery_url }}"
+
+#- name: Remove original osquery config
+#  file:
+#    path: "/etc/osquery"
+
+- name: Create osquery flags file
+  copy:
+     dest: "/etc/osquery/osquery.flags"
+     content: |
+       --audit_allow_config=true
+       --audit_allow_sockets
+       --audit_allow_process_events=true
+       --audit_allow_accept_socket_events
+       --audit_persist=true
+       --disable_audit=false
+       --events_expiry=1
+       --events_max=500000
+       --logger_min_status=1
+       --logger_plugin=filesystem
+       --watchdog_memory_limit=350
+       --watchdog_utilization_limit=130
+       --disable_events=false
+       --allow_audit_config=true
+       --logger_rotate=true
+       --logger_rotate_size=26214400
+       --logger_rotate_max_files=10
+
+- name: Copy osquery conf file
+  ansible.builtin.copy:
+     src: osquery/osquery.conf
+     dest: /etc/osquery/osquery.conf
+     owner: root
+     group: sudo
+     mode: u=rwx,g=rwx,o-rwx
+
+- name: Copy osquery packs
+  ansible.posix.synchronize:
+     src: osquery/packs/
+     dest: /etc/osquery/packs/
+     
+- name: Enable and start osquery
+  systemd:
+    name: osqueryd
+    state: started
+    enabled: yes
+
+# docker
+- name: Add Docker GPG key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: Add docker repository to apt
+  apt_repository:
+    repo: deb https://download.docker.com/linux/debian "{{ debian_release }}" stable
+    state: present
+
+- name: Install docker packages
+  apt:
+    pkg:
+       - docker-ce
+       - docker-ce-cli
+       - containerd.io
+       - docker-buildx-plugin
+       - docker-compose-plugin
+
+- name: Verify docker started 
+  service:
+     name: docker
+     state: started
+     enabled: yes
+
+- name: Ensure group "docker" exists
+  ansible.builtin.group:
+     name: docker
+     state: present
+    
+# crontabs
+- name: Create a cronjob which runs apt update every day
+  cron:
+    name: "apt get update"
+    minute: "0"
+    hour: "23"
+    weekday: "*"
+    job: "/usr/bin/apt update -q -y > /dev/null 2>&1"
+
+# vscodium
+- name: Add vscodium GPG key
+  apt_key:
+    url: https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/master/pub.gpg
+    state: present
+    
+- name: Add vscodium repository to apt
+  apt_repository:
+    repo: deb https://download.vscodium.com/debs vscodium main
+    state: present
+
+- name: Install codium
+  apt:
+    pkg:
+       - codium
+
+# brave browser
+- name: Add brave GPG key
+  apt_key:
+    url: https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
+    state: present
+    
+- name: Add brave repository to apt
+  apt_repository:
+    repo: deb https://brave-browser-apt-release.s3.brave.com/ stable main
+    state: present
+
+- name: Install brave-browser
+  apt:
+    pkg:
+       - brave-browser
+
+- name: Copy shellscript that cron will use to launch specific apps via firejail
+  ansible.builtin.copy:
+     src: firejail-cron.sh
+     dest: /usr/local/bin/firejail-cron.sh
+     owner: root
+     group: sudo
+     mode: u=rwx,g=rwx,o-rwx
+
+- name: Crontab to cause thunderbird, brave, chrome, vscodium, and libreoffice to use firejail when launched via UI
+  cron:
+    name: "use firejail for key desktop apps"
+    minute: "13"
+    hour: "*"
+    weekday: "*"
+    job: "/usr/local/bin/firejail-cron.sh > /dev/null 2>&1"
+

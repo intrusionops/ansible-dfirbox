@@ -1,0 +1,435 @@
+- name: Install forensic apt packages
+  apt:
+    pkg: 
+     # Ordinarily I'd install the Debian forensics-all and forensics-extra metapackages but these contain packages that conflict 
+     # with autopsy/sleuthkit/libtsk so install most of them individually instead.
+     # see https://packages.debian.org/sid/forensics-all and https://packages.debian.org/sid/forensics-extra
+     #- forensics-all
+     #- forensics-extra
+     - acct
+     - aesfix
+     - aeskeyfind
+     - afflib-tools
+     - ancient
+     - ansifilter
+     - apfsprogs
+     - arc
+     - archivemount
+     - aria2
+     - bfbtester
+     - bind9-dnsutils
+     - binutils
+     - binwalk
+     - braa
+     - bzip2
+     - bzip3
+     - cabextract
+     - capstone-tool
+     - catdoc
+     - ccrypt
+     - chkrootkit
+     - chntpw
+     - chromium
+     - chromium-l10n
+     - cisco7crack
+     - coreutils
+     - clzip
+     - comprez
+     - crunch
+     - cryptmount
+     - csvkit
+     - curl
+     - crack
+     - dact
+     - dares
+     - dc3dd
+     - dcfldd
+     - ddrutility
+     - de4dot
+     - dhcpdump
+     - dictconv
+     - diffstat 
+     - disktype
+     - diskscan
+     - dmitry
+     - dmg2img
+     - dtach
+     - erofs-utils
+     - ethstatus
+     - ethtool
+     - ewf-tools
+     - exfat-fuse
+     - exif 
+     - exiftags
+     - exifprobe
+     - ext4magic
+     - extundelete
+     - exiv2
+     - fatcat
+     - fcrackzip
+     - fdupes
+     - foremost
+     - forensic-artifacts
+     - forensics-colorize
+     - funcoeszz
+     - galleta
+     - gddrescue
+     - gdisk
+     - gdb
+     - gddrescue
+     - gdisk
+     - gimp
+     - guymager
+     - geoip-bin
+     - gifshuffle
+     - grokevt
+     - hashdeep
+     - hashid
+     - hashrat
+     - hcxkeys
+     - hcxtools
+     - hdparm
+     - hydra
+     - hexcompare
+     - hexedit
+     - horst
+     - hping3
+     - hwinfo
+     - imageindex
+     - imagemagick
+     - img2pdf
+     - inxi
+     - ipgrab
+     - ipv6toolkit
+     - john
+     - jdupes
+     - kpartx
+     - less
+     - libafflib-dev
+     - libbfio-dev
+     - libc3p0-java
+     - libemail-outlook-message-perl
+     - libevtx-utils
+     - libewf-dev
+     - libfsapfs-utils
+     - libfuse-dev
+     - libimage-exiftool-perl
+     - libsane
+     - lltdscan
+     - lrzip
+     - lshw
+     - lynis
+     - lz4
+     - lzma
+     - lzop
+     - mac-robber
+     - magicrescue
+     - maskprocessor
+     - masscan
+     - mblaze
+     - mboxgrep
+     - mc
+     - mdns-scan 
+     - memdump
+     - metacam
+     - mfcuk
+     - mfoc
+     - missidentify
+     - myrescue
+     - mblaze
+     - mboxgrep
+     - membernator
+     - memstat
+     - minizip
+     - mpack
+     - mscompress
+     - pipebench
+     - nasm
+     - nast 
+     - nasty 
+     - ncompress
+     - ncat
+     - ncrack
+     - ndiff 
+     - netcat-openbsd
+     - netdiscover
+     - ngrep 
+     - nomarch
+     - nstreams
+     - ntfs-3g
+     - nwipe 
+     - openpace
+     - outguess
+     - p7zip-full
+     - packit
+     - parted
+     - parallel
+     - pcapfix
+     - pcaputils
+     - pciutils
+     - pcre2-utils
+     - pev
+     - pdfcrack
+     - pecomato
+     - pev
+     - pff-tools
+     - plzip
+     - png-definitive-guide
+     - pngcheck
+     - poppler-utils
+     - psrip
+     - pv
+     - python3-evtx
+     - rarcrack
+     - readstat
+     - reaver
+     - recoverdm
+     - recoverjpeg
+     - reglookup
+     - regripper
+     - rephrase
+     - rhash
+     - rifiuti
+     - rifiuti2
+     - rkhunter
+     - rsakeyfind
+     - rzip
+     - sane
+     - sane-utils
+     - scalpel
+     - scrot
+     - scrounge-ntfs
+     - secure-delete
+     - shed
+     - sipcrack
+     - sipvicious
+     - smartmontools
+     - sngrep
+     - sqlitebrowser
+     - squashfs-tools-ng
+     - ssh-audit
+     - ssldump
+     - sslscan
+     - ssdeep
+     - statsprocessor
+     - stegcracker
+     - steghide
+     - stegsnow
+     - stepic
+     - syncthing
+     - sucrack
+     - sxiv
+     - tableau-parm
+     - tcpdump
+     - tcpick
+     - tcptrace
+     - tcpxtract
+     - testdisk
+     - testssl.sh
+     - tesseract-ocr
+     - tesseract-ocr-deu
+     - time-decode
+     - tofrodos
+     - tshark
+     - ugrep
+     - unrar-free
+     - uni2ascii
+     - unzip
+     - undbx
+     - unhide
+     - unhide.rb
+     - usbutils
+     - uudeview
+     - vinetto
+     - wamerican
+     - wamerican-huge
+     - wamerican-insane
+     - wamerican-large
+     - wamerican-small
+     - whois
+     - winregfs
+     - wipe
+     - wireshark
+     - wzip
+     - xmount
+     - xva-img
+     - xxd
+     - xz-utils
+     - yara 
+     - zfs-fuse
+     - zpaq
+  become: yes
+  tags:
+    - packages
+
+- name: Install croc
+  ansible.builtin.unarchive:
+       src: "{{ croc_url }}"
+       dest: /usr/local/bin
+       exclude: ['README.md', 'LICENSE']
+       mode: 0755
+       owner: root
+       remote_src: yes
+       validate_certs: yes
+       keep_newer: true
+
+- name: Install mdcat
+  ansible.builtin.unarchive:
+       src: " {{ mdcat_url }}"
+       dest: /usr/local/bin
+       exclude: ['LICENSE', 'README.md', 'completions', 'CHANGELOG.md', 'mdcat.1']
+       mode: 0755
+       owner: root
+       remote_src: yes
+       validate_certs: yes
+       keep_newer: yes
+
+- name: mdcat sub-dir work around
+  shell: mv /usr/local/bin/mdcat*unknown-linux-musl/mdcat /usr/local/bin/mdcat && rm -rf /usr/local/bin/mdcat*unknown-linux-musl
+  become: true
+
+- name: Download and unzip awscli
+  ansible.builtin.unarchive:
+       src: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+       dest: /tmp
+       mode: 0755
+       owner: root
+       remote_src: yes
+       validate_certs: yes 
+
+- name: Install awscli
+  shell: "cd /tmp && ./aws/install"
+  become: true
+  ignore_errors: true # This fails if you attempt to run it a second time
+
+- name: Remove tmp aws install directory
+  ansible.builtin.file:
+     path: /tmp/aws
+     state: absent
+     
+- name: Install volatility3
+  include: volatility3.yml
+
+- name: Create general tools directory
+  file:
+     path: "/opt/tools"
+     state: directory
+     group: sudo
+     mode: 0755
+
+- name: Git clone ForensicArtifacts
+  git:
+     repo: "https://github.com/ForensicArtifacts/artifacts"
+     dest: /opt/tools/artifacts
+     clone: yes
+
+- name: Git clone sigma
+  git:
+     repo: "https://github.com/SigmaHQ/sigma"
+     dest: /opt/tools/sigma
+     clone: yes
+
+- name: Install sigma-cli
+  ansible.builtin.pip:
+    name: sigma-cli
+    virtualenv: /opt/tools/sigma/venv
+    virtualenv_command: 'python3 -m venv'
+
+- name: Git clone Neo23x0's signature-base
+  git:
+     repo: "https://github.com/Neo23x0/signature-base"
+     dest: /opt/tools/signature-base
+     clone: yes
+
+# crontabs
+- name: Create a cronjob to update /mnt/cache, /mnt/storage, and /opt/tools perms
+  cron:
+    name: "update mnt perms"
+    minute: "3"
+    hour: "*"
+    weekday: "*"
+    job: "chgrp -R sudo /mnt/{cache,storage} && chmod -R g+rw /mnt/{cache,storage} && chgrp -R sudo /opt/tools && chmod -R g+rw /opt/tools"
+
+- name: Create chainsaw directory
+  ansible.builtin.file:
+    path: /opt/tools/chainsaw
+    state: directory
+
+- name: Install chainsaw
+  ansible.builtin.unarchive:
+       src: "{{ chainsaw_url }}"
+       dest: /opt/tools
+       # the typo is not mine
+       exclude: ['LICENCE']
+       mode: 0755
+       owner: root
+       remote_src: yes
+       validate_certs: yes
+       keep_newer: yes
+
+- name: Create hayabusa directory
+  ansible.builtin.file:
+    path: /opt/tools/hayabusa
+    state: directory
+
+- name: Install hayabusa
+  ansible.builtin.unarchive:
+       src: " {{ hayabusa_url }}"
+       dest: /opt/tools/hayabusa
+       exclude: ['CHANGELOG-Japanese.md', 'CHANGELOG.md', 'contributors.txt', 'LICENSE.txt', 'logo.png', 'README-Japanese.md','art']
+       mode: 0755
+       owner: root
+       remote_src: yes
+       validate_certs: yes
+       keep_newer: yes
+
+- name: Install oletools
+  ansible.builtin.pip:
+    name: oletools[full]
+    virtualenv: /opt/tools/venv
+    virtualenv_command: 'python3 -m venv'
+
+# create dist directory
+# grab avml, catscale, others
+- name: Create dir for programs/scripts that we distribute to clients
+  ansible.builtin.file:
+    path: /opt/tools/dist
+    state: directory
+
+- name: Download avml
+  ansible.builtin.get_url:
+    url: "{{ avml_url }}"
+    dest: /opt/tools/dist/avml
+
+- name: Download Cat-Scale
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/WithSecureLabs/LinuxCatScale/master/Cat-Scale.sh
+    dest: /opt/tools/dist/Cat-Scale.sh
+
+- name: Download unix_collector.sh
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/op7ic/unix_collector/main/unix_collector.sh
+    dest: /opt/tools/dist/unix_collector.sh
+
+# Excluded due to licensing restrictions: FTK Imager, KAPE, THOR
+
+- name: Create timesketch directory
+  ansible.builtin.file:
+    path: /opt/tools/timesketch
+    state: directory
+
+- name: Download timesketch installer
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/google/timesketch/master/contrib/deploy_timesketch.sh
+    dest: /opt/tools/timesketch
+    mode: '0440'
+
+- name: Pull plaso docker image
+  docker_image:
+     name: log2timeline/plaso
+     source: pull
+
+- name: Pull IPED docker image
+  docker_image:
+     name: ipeddocker/iped
+     source: pull

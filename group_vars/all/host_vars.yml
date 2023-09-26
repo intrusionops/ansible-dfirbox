@@ -1,0 +1,72 @@
+---
+# This will be used to pre-populate some Autopsy config settings. it should already exist or be defined in the 'users' role
+mainuser: jjethro  
+osquery_ver: osquery_5.9.1-1
+osquery_url: https://pkg.osquery.io/deb/{{ osquery_ver }}.linux_amd64.deb
+debian_release: bookworm
+croc_ver: 9.6.5
+croc_url: https://github.com/schollz/croc/releases/download/v{{ croc_ver }}/croc_{{ croc_ver }}_Linux-64bit.tar.gz
+rclone_ver: 1.64.0
+rclone_url: https://github.com/rclone/rclone/releases/download/v{{ rclone_ver }}/rclone-v{{ rclone_ver }}-linux-amd64.zip
+mdcat_ver: 2.0.3
+mdcat_url: https://github.com/swsnr/mdcat/releases/download/mdcat-{{ mdcat_ver }}/mdcat-{{ mdcat_ver }}-x86_64-unknown-linux-musl.tar.gz
+chainsaw_ver: 2.7.3
+chainsaw_url: https://github.com/WithSecureLabs/chainsaw/releases/download/v{{ chainsaw_ver }}/chainsaw_x86_64-unknown-linux-gnu.tar.gz
+hayabusa_ver: 2.8.0
+hayabusa_url: https://github.com/Yamato-Security/hayabusa/releases/download/v{{ hayabusa_ver }}/hayabusa-{{ hayabusa_ver }}-all-platforms.zip
+avml_ver: 0.12.0
+avml_url: https://github.com/microsoft/avml/releases/download/v{{ avml_ver }}/avml
+
+# auditd conflicts with osquery
+stop_services:
+   - "cups.service"
+   - "auditd.service"
+
+# needed for devsec.hardening.os_hardening when using docker
+sysctl_overwrite:
+   net.ipv4.ip_forward: 1
+
+# devsec.hardening.os_hardening vars
+# disable this because it conflicts with osquery
+os_auditd_enabled: false
+# We'll disable password auth in sshd
+os_auth_pw_max_age: 99999
+# I'm an embarrassment to my ancestors
+os_desktop_enable: true
+# We'll hit limits fast with the work we're doing here
+os_limits_enabled: false
+os_remove_additional_root_users: true
+os_rhosts_enabled: false
+# One day...
+os_selinux_enabled: false
+os_selinux_state: disabled
+os_user_pw_ageing: false
+
+
+# devsec.hardening.ssh_hardening vars
+# see https://github.com/dev-sec/ansible-collection-hardening/tree/master/roles/ssh_hardening
+# for available vars
+sftp_enabled: false
+# ssh_allow_tcp_forwarding. this is disabled by default. noting in case it causes
+# problems later
+# I'm not using krb
+ssh_kerberos_support: false
+# I use xauth over ssh
+ssh_permit_tunnel: true
+ssh_x11_forwarding: true
+
+# Check https://github.com/sleuthkit/autopsy/releases
+autopsy_version: 4.21.0
+# Check https://github.com/sleuthkit/sleuthkit/releases
+sleuthkit_version: 4.12.1
+
+volatility3_repo: https://github.com/volatilityfoundation/volatility3.git
+volatility3_build_dir: /usr/local/src/volatility3
+
+tailscale_authkey: "{{ lookup('env', 'TAILSCALE_KEY') }}"
+
+# How much memory to give Autopsy's instance of Solr. See https://sleuthkit.discourse.group/t/performance-testing-and-tuning-for-autopsy-4-18/2536
+# Do not exceed 32GB but tune for your hardware/VM mem availability
+solr_mem: 24000 
+# Autopsy ingest threads. See https://sleuthkit.org/autopsy/docs/user-docs/4.5.0/performance_page.html. Not to exceed 4.
+autopsy_threads: 4

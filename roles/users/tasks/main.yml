@@ -1,0 +1,21 @@
+- user:
+    name: jjethro
+    shell: /bin/bash
+    groups: sudo,docker
+    createhome: yes
+    state: present
+
+- name: Set authorized key for jjethro
+  authorized_key:
+    user: jjethro
+    state: present
+    exclusive: True
+    key: "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOPwyJPX1mplgzuwDCsPOPMvaOKX+tpq7Yp+ya10p38LVc2xOxuEJqcnd0TmfIe6g9tiPIrHoeSArnk+Pvam7po= j@ops"
+
+- name: Set permissions for user jjethro
+  file:
+    path: /home/jjethro
+    owner: jjethro
+    group: jjethro
+    mode: 0700
+

@@ -1,0 +1,23 @@
+---
+
+- name: Workstations
+  hosts: all
+  become: yes
+  gather_facts: False
+  pre_tasks:
+    - name: Install minimal Python for Ansible
+      raw: test -e /usr/bin/python3 || (apt -y update && apt install -y python3-minimal python3-pip)
+      changed_when: False
+    - setup: 
+  collections:
+     - devsec.hardening
+  roles:
+     - system
+     - devsec.hardening.os_hardening
+     - devsec.hardening.ssh_hardening
+     - artis3n.tailscale
+     - dfir
+     - autopsy
+     - stefangweichinger.ansible_rclone
+     - users
+    

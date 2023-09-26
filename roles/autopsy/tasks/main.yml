@@ -1,0 +1,134 @@
+---
+# Taken from https://github.com/jgru/ansible-forensic-workstation/blob/master/roles/autopsy/tasks/main.yml (thanks!)
+- name: Remove sleuthkit and libtsk13 package. (Conflicts with autopsy)
+  apt:
+    name:
+      - sleuthkit
+      - libtsk13
+      - libtsk19
+    state: absent
+  become: yes
+
+- name: Install Autopsy's dependencies
+  apt:
+    pkg:
+       - libafflib-dev
+       - libbfio-dev
+       - libc3p0-java
+       - libewf-dev
+       - testdisk  # photorec dependency
+       # the following requirements were taken from install_prereqs_ubuntu.sh that ships with autopsy
+       - libaom-dev
+       - libdav1d-dev
+       - libssl-dev
+       - libx265-dev
+       - openjdk-17-demo
+       - openjdk-17-source
+       - visualvm
+       - openjdk-17-jdk-headless
+       - openjdk-17-jdk
+  become: yes
+
+- name: Update alternatives for java
+  alternatives:
+    name: java
+    path: "/usr/lib/jvm/java-1.17.0-openjdk-amd64"
+    link: "/usr/bin/java"
+
+- name: Set $JAVA_HOME as environment variable for bash
+  lineinfile:
+    insertafter: EOF
+    path: "/home/{{ mainuser }}/.bashrc"
+    line: "export JAVA_HOME='/usr/lib/jvm/java-1.17.0-openjdk-amd64'"
+
+
+- name: Install Sleuthkit with Java bindings - sleuthkit-java.deb
+  apt:
+    deb: https://github.com/sleuthkit/sleuthkit/releases/download/sleuthkit-{{ sleuthkit_version }}/sleuthkit-java_{{ sleuthkit_version }}-1_amd64.deb
+  become: yes
+
+- name: Unarchive Autopsy-zip-file
+  unarchive: 
+    src: https://github.com/sleuthkit/autopsy/releases/download/autopsy-{{ autopsy_version }}/autopsy-{{ autopsy_version }}.zip
+    dest: /opt/
+    remote_src: yes
+
+- name: Ensure Autopsy's directory permission
+  file:
+    path: /opt/autopsy-{{ autopsy_version }}
+    state: directory
+    owner: "{{ mainuser }}"
+    mode: "0755"
+
+- name: Execute setup script unix_setup.sh
+  shell: bash /opt/autopsy-{{ autopsy_version }}/unix_setup.sh
+  # Specify environment variable explicitly, because .bashrc is not read at that time
+  environment:
+    JAVA_HOME: /usr/lib/jvm/java-1.17.0-openjdk-amd64
+  args:
+    chdir: /opt/autopsy-{{ autopsy_version }}
+
+- name: Recursively change ownership of a directory
+  file:
+    path: /opt/autopsy-{{ autopsy_version }}
+    state: directory
+    recurse: yes
+    owner: "{{ mainuser }}"
+    group: "{{ mainuser }}"
+
+- name: Create symbolic link to run autopsy
+  become: yes
+  file:
+    path: "/usr/local/bin/autopsy"
+    owner: "{{ mainuser }}"
+    group: "{{ mainuser }}"
+    state: touch
+    mode: 0755
+
+- name: Create wrapper to run autopsy
+  become: yes
+  blockinfile:
+    path: /usr/local/bin/autopsy
+    block: |
+      #!/bin/bash
+      /opt/autopsy-{{ autopsy_version }}/bin/autopsy --nosplash
+
+- name: Download Autopsy plugins
+  git:
+     repo: "https://github.com/sleuthkit/autopsy_addon_modules"
+     dest: /opt/tools/autopsy_addon_modules
+     clone: yes
+  
+- name: Download Autopsy Python plugins
+  git:
+     repo: "https://github.com/markmckinnon/Autopsy-Plugins/"
+     dest: /opt/tools/autopsy-python-plugins
+     clone: yes
+
+- name: Optimize autopsy and Solr settings
+  copy:
+     dest: "/home/{{ mainuser }}/.autopsy/dev/config/MachineSpecificPreferences.properties"
+     content: |
+       SolrMaxJVMSize={{ solr_mem }}
+       ProcessTimeOutEnabled=false
+       NumberOfFileIngestThreads={{ autopsy_threads }}
+       MaximumNumberOfLogFiles=10
+
+- name: Create autopsy desktop launcher
+  copy:
+     dest: "/usr/share/applications/autopsy.desktop"
+     content: |
+       [Desktop Entry]
+       Name=Autopsy
+       Comment=The Autopsy Forensic Browser is a GUI for The Sleuth Kit.
+       GenericName=Autopsy
+       Exec=/usr/local/bin/autopsy
+       Icon=/opt/autopsy-{{ autopsy_version }}/icon.ico
+       Type=Application
+       StartupNotify=false
+       Categories=Utility;
+
+# Python plugins will automatically show up under Tools -> Python Plugins and be available as ingest options
+- name: Install Autopsy Python plugins to primary user's profile
+  shell: for i in $(ls /opt/tools/autopsy-python-plugins); do cp -R /opt/tools/autopsy-python-plugins/$i /home/{{ mainuser }}/.autopsy/dev/python_modules; done
+
