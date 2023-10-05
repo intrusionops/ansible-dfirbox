@@ -105,6 +105,10 @@
      dest: /opt/tools/autopsy-python-plugins
      clone: yes
 
+- name: Create autopsy config directory so we can set some defaults
+  shell: mkdir -p /home/{{ mainuser }}/.autopsy/dev/config ; chown -R {{ mainuser }}:{{ mainuser }} /home/{{ mainuser }}/.autopsy/ ; chmod -R o-rwx /home/{{ mainuser }}/.autopsy/
+  ignore_errors: true
+
 - name: Optimize autopsy and Solr settings
   copy:
      dest: "/home/{{ mainuser }}/.autopsy/dev/config/MachineSpecificPreferences.properties"

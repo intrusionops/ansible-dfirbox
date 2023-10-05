@@ -3,7 +3,7 @@
 # to make sure these apps are always launched via firejail.
 #
 # brave browser
-sed -i -s 's/Exec=\/usr\/bin\/brave-browser-stable/Exec=\/usr\/bin\/firejail /g' /usr/share/applications/brave-browser.desktop 
+sed -i -s 's/Exec=\/usr\/bin\/brave-browser-stable/Exec=\/usr\/bin\/firejail \/usr\/bin\/brave-browser-stable/g' /usr/share/applications/brave-browser.desktop 
 # thunderbird
 sed -i -s 's/Exec=\/usr\/bin\/thunderbird/Exec=\/usr\/bin\/firejail \/usr\/bin\/thunderbird %u/g' /usr/share/applications/thunderbird.desktop 
 # chromium

@@ -79,6 +79,7 @@
      - libreoffice
      - lxc
      - info
+     - xclip
   become: yes
   tags:
     - packages
